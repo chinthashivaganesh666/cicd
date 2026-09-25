@@ -2,6 +2,9 @@ name: ci/cd pipeline to deploy to tomcat
 on:
    push:
       branches: master
+      
+   workflow_dispatch:
+
 jobs:
    build-deploy:
      runs-on: ubuntu-latest
@@ -26,16 +29,33 @@ jobs:
         - name: verify war file
           run: ls -lh target/
           # deploy to tomcat
-        - name: sonarQube scan
-          env:
-             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-             SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        - name: setup java 8 again
+          uses: actions/setup-java@v4
+          with:
+           distribution: temurin
+           java-version: '8'
+        - name: configure maven settings.xml
           run: |
-             mvn org.sonarsource.scanner.maven:sonar-maven-plugin:5.7.0.6970:sonar \
-               -Dsonar.projectKey=train \
-               -Dsonar.projectName=TrainBook \
-               -Dsonar.host.url="$SONAR_HOST_URL" \
-               -Dsonar.token="$SONAR_TOKEN"
+            mkdir -p ~/.m2
+            cat > ~/.m2/settings.xml  <<EOF
+            <settings>
+             <servers>
+              <server>
+                <id>nexus</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+             </servers>
+            </settings>
+               EOF
+        - name: deploy artifact to nexus
+          run: |
+            mvn deploy \
+              -DskipTests \
+              -DaltDeploymentRepository=nexus::default::${{ secrets.NEXUS_REPO_URL }}
+
+        
+          
             
             
          
