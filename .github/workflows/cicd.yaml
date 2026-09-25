@@ -26,11 +26,11 @@ jobs:
         - name: verify war file
           run: ls -lh target/
           # deploy to tomcat
-         - name: sonarQube scan
-           env:
+        - name: sonarQube scan
+          env:
              SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
              SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-           run: |
+          run: |
              mvn org.sonarsource.scanner.maven:sonar-maven-plugin:5.7.0.6970:sonar \
                -Dsonar.projectKey=train \
                -Dsonar.projectName=TrainBook \
